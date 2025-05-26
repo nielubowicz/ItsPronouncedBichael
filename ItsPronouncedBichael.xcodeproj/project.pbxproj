@@ -29,9 +29,22 @@
 		04C2E72C2DE2339B00D67924 /* ItsPronouncedBichaelUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ItsPronouncedBichaelUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		0406E9802DE3B4230096899D /* Exceptions for "ItsPronouncedBichael" folder in "ItsPronouncedBichael" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 04C2E7122DE2339800D67924 /* ItsPronouncedBichael */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		04C2E7152DE2339800D67924 /* ItsPronouncedBichael */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				0406E9802DE3B4230096899D /* Exceptions for "ItsPronouncedBichael" folder in "ItsPronouncedBichael" target */,
+			);
 			path = ItsPronouncedBichael;
 			sourceTree = "<group>";
 		};
@@ -400,11 +413,17 @@
 				DEVELOPMENT_TEAM = 9RH4L8S898;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ItsPronouncedBichael/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
+				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "Bichael needs to know where you're going.";
+				INFOPLIST_KEY_NSLocationUsageDescription = "Bichael needs to know where you're going.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Bichael needs to know where you're going.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -428,11 +447,17 @@
 				DEVELOPMENT_TEAM = 9RH4L8S898;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ItsPronouncedBichael/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
+				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "Bichael needs to know where you're going.";
+				INFOPLIST_KEY_NSLocationUsageDescription = "Bichael needs to know where you're going.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Bichael needs to know where you're going.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
