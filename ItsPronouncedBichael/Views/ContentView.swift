@@ -62,6 +62,9 @@ struct ContentView: View {
     private func addItem() {
         withAnimation {
             let currentRoute = Route(initialRoute: [CLLocation]())
+            // TODO: Don't update the Model so often
+            // Find a way to batch, stream or collect location updates without
+            // changing the Route object at every update.
             LocationManager.shared.startRoute(currentRoute)
             modelContext.insert(currentRoute)
         }

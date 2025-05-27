@@ -10,4 +10,14 @@ final class Route {
     init(initialRoute: [CLLocation]) {
         self.locations = initialRoute.map { RouteLocation($0) }
     }
+    
+    func mapLocations() async -> [CLLocationCoordinate2D] {
+        return await withCheckedContinuation { continuation in
+            continuation.resume(
+                returning: locations.map {
+                    CLLocationCoordinate2DMake($0.latitude, $0.longitude)
+                }
+            )
+        }
+    }
 }

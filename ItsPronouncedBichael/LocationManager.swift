@@ -29,7 +29,9 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
         Task {
             backgroundActivitySession = CLBackgroundActivitySession()
             do {
+                try Task.checkCancellation()
                 for try await update in CLLocationUpdate.liveUpdates() {
+                    try Task.checkCancellation()
                     if let location = update.location {
                         backgroundLocations.append(RouteLocation(location))
                     }
@@ -50,6 +52,19 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
     func startRoute(_ route: Route) {
         route.start = .now
         self.route = route
+        manager.startUpdatingLocation()
+        Task { @MainActor in
+            do {
+                try Task.checkCancellation()
+                for try await update in CLLocationUpdate.liveUpdates() {
+                    try Task.checkCancellation()
+                    guard let location = update.location else { continue }
+                    route.locations.append(RouteLocation(location))
+                }
+            } catch {
+                print(error)
+            }
+        }
     }
     
     func endRoute() -> Route {
@@ -68,7 +83,6 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
         case .authorizedWhenInUse,
                 .authorizedAlways:
             manager.showsBackgroundLocationIndicator = true
-            manager.startUpdatingLocation()
         case .denied,
                 .restricted:
             print("L10n.Error.Location.notEnabled")
@@ -77,11 +91,12 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
         }
     }
     
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        Task { @MainActor in
-            route?.locations.append(contentsOf: locations.map { RouteLocation($0) })
-        }
-    }
+//    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+//        Task { @MainActor in
+//            try Task.checkCancellation()
+//            route?.locations.append(contentsOf: locations.map { RouteLocation($0) })
+//        }
+//    }
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: any Error) {
         print(error)
