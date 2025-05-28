@@ -1,11 +1,16 @@
-import SwiftUI
 import MapKit
+import SwiftUI
 
 struct RouteView: View {
-    let route: Route
+    @State var viewModel: RouteViewModel
     
+    @State private var lastDistance = Measurement<UnitLength>(value: 0, unit: .meters).formatted()
     @State private var routeLocations = [CLLocationCoordinate2D]()
     @State private var position: MapCameraPosition = .userLocation(followsHeading: true, fallback: .automatic)
+    
+    init(route: Route) {
+        viewModel = RouteViewModel(route: route)
+    }
     
     var body: some View {
         VStack {
@@ -19,13 +24,75 @@ struct RouteView: View {
             .mapControls {
                 MapUserLocationButton()
             }
+            .mapStyle(.standard(elevation: .realistic, showsTraffic: viewModel.showTraffic))
+            .overlay(alignment: .bottomTrailing) {
+                VStack(alignment: .trailing, spacing: 0) {
+                    if viewModel.showEndRoute {
+                        Button { let _ = LocationManager.shared.endRoute() } label: { Label("", systemImage: "stop.circle").font(.title) }
+                            .padding(24)
+                            .background(Color(UIColor.darkGray).opacity(0.4))
+                            .frame(maxWidth: .infinity)
+                            .clipShape(
+                                UnevenRoundedRectangle(
+                                    topLeadingRadius: 16,
+                                    bottomLeadingRadius: 0,
+                                    bottomTrailingRadius: 0,
+                                    topTrailingRadius: 16,
+                                    style: .continuous
+                                )
+                            )
+                            .contentShape(
+                                UnevenRoundedRectangle(
+                                    topLeadingRadius: 16,
+                                    bottomLeadingRadius: 0,
+                                    bottomTrailingRadius: 0,
+                                    topTrailingRadius: 16,
+                                    style: .continuous
+                                )
+                            )
+                    }
+                    
+                    Color(.black)
+                        .frame(height: 1)
+                    
+                    Button { viewModel.showTraffic.toggle() } label: { Label("", systemImage: viewModel.showTraffic ? "car.fill" : "car").font(.title)
+                            .padding(24)
+                            .background(Color(UIColor.darkGray).opacity(0.4))
+                            .clipShape(
+                                UnevenRoundedRectangle(
+                                    topLeadingRadius: viewModel.showEndRoute ? 0 : 16,
+                                    bottomLeadingRadius: 0,
+                                    bottomTrailingRadius: 0,
+                                    topTrailingRadius: viewModel.showEndRoute ? 0 : 16,
+                                    style: .continuous
+                                )
+                            )
+                            .contentShape(
+                                UnevenRoundedRectangle(
+                                    topLeadingRadius: viewModel.showEndRoute ? 0 : 16,
+                                    bottomLeadingRadius: 0,
+                                    bottomTrailingRadius: 0,
+                                    topTrailingRadius: viewModel.showEndRoute ? 0 : 16,
+                                    style: .continuous
+                                )
+                            )
+                    }
+                }
+                .fixedSize(horizontal: true, vertical: false)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(.black, lineWidth: 1)
+                }
+            }
         }
         .task {
-            routeLocations = await route.mapLocations()
+            routeLocations = await viewModel.mapLocations()
         }
-        .onChange(of: route.locations) { _, newValue in
+        .onChange(of: viewModel.route.locations) { _, _ in
             Task {
-                routeLocations = await route.mapLocations()
+                try? Task.checkCancellation()
+                routeLocations = await viewModel.mapLocations()
             }
         }
     }
@@ -34,9 +101,9 @@ struct RouteView: View {
     var header: some View {
         HStack {
             VStack {
-                Text(route.start?.formatted(date: .omitted, time: .shortened) ?? "")
+                Text(viewModel.startDate)
                     .padding(.top)
-                Text(route.end?.formatted(date: .omitted, time: .shortened) ?? "")
+                Text(viewModel.endDate)
                     .padding(.bottom)
             }
             .font(.caption)
@@ -45,21 +112,35 @@ struct RouteView: View {
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(.black, lineWidth: 1)
             }
-         
-            if let speed = route.locations.last?.speed,
-               speed.value >= 0 {
-                Text(lastSpeed)
-                    .font(.headline)
-                    .fontWeight(.bold)
-                    .padding()
-                    .background(.gray.opacity(0.1))
-                    .padding()
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(.black, lineWidth: 1)
+            
+            Text(viewModel.lastSpeed)
+                .font(.headline)
+                .fontWeight(.bold)
+                .padding()
+                .background(.gray.opacity(0.1))
+                .padding()
+                .overlay {
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(.black, lineWidth: 1)
+                }
+            
+            VStack {
+                Text(viewModel.averageSpeed)
+                Text(viewModel.maxSpeed)
+                Text(lastDistance)
+                    .task {
+                        lastDistance = await viewModel.routeLength()
                     }
-            } else {
-                EmptyView()
+                    .onChange(of: routeLocations) { _,_ in
+                        Task {
+                            lastDistance = await viewModel.routeLength()
+                        }
+                    }
+            }
+            .padding(.horizontal)
+            .overlay {
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(.black, lineWidth: 1)
             }
         }
     }
@@ -76,8 +157,11 @@ struct RouteView: View {
             style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
         )
     }
-    
-    private var lastSpeed: String {
-        route.locations.last?.speed.converted(to: .milesPerHour).formatted(.measurement(width: .abbreviated)) ?? ""
+}
+
+extension CLLocationCoordinate2D: @retroactive Equatable {
+    public static func == (lhs: CLLocationCoordinate2D, rhs: CLLocationCoordinate2D) -> Bool {
+        lhs.latitude == rhs.latitude &&
+        lhs.longitude == rhs.longitude
     }
 }

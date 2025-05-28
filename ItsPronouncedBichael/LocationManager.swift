@@ -49,11 +49,13 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
         backgroundLocations.removeAll()
     }
     
+    private var routeTask: Task<Void, Never>?
+    
     func startRoute(_ route: Route) {
         route.start = .now
         self.route = route
         manager.startUpdatingLocation()
-        Task { @MainActor in
+        routeTask = Task { @MainActor in
             do {
                 try Task.checkCancellation()
                 for try await update in CLLocationUpdate.liveUpdates() {
@@ -68,6 +70,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
     }
     
     func endRoute() -> Route {
+        routeTask?.cancel()
         route?.end = .now
         return route ?? Route(initialRoute: [CLLocation]())
     }
