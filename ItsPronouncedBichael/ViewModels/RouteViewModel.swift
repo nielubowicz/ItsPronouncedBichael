@@ -4,6 +4,8 @@ import CoreLocation
 struct RouteViewModel {
     let route: Route
     
+    var locations = [RouteLocation]()
+    
     var showTraffic = true
     
     var showEndRoute: Bool {
@@ -32,7 +34,7 @@ struct RouteViewModel {
     
     func routeLength() async -> String {
         return await withCheckedContinuation { continuation in
-            let locations = route.locations.map { CLLocation($0) }
+            let locations = locations.map { CLLocation($0) }
             let measurement = Measurement<UnitLength>(value: vDSP.sum(zip(locations.dropLast(), locations.dropFirst()).map { $0.0.distance(from: $0.1) }), unit: .meters)
             continuation.resume(
                 returning: measurement.converted(to: lengthUnit).formatted(.measurement(width: .abbreviated))
@@ -40,14 +42,12 @@ struct RouteViewModel {
         }
     }
     
+    func mapLocations() -> [CLLocationCoordinate2D] {
+        locations.map { CLLocationCoordinate2DMake($0.latitude, $0.longitude) }
+    }
+    
     func mapLocations() async -> [CLLocationCoordinate2D] {
-        return await withCheckedContinuation { continuation in
-            continuation.resume(
-                returning: route.locations.map {
-                    CLLocationCoordinate2DMake($0.latitude, $0.longitude)
-                }
-            )
-        }
+        await withCheckedContinuation { $0.resume(returning: mapLocations()) }
     }
 }
 
@@ -57,14 +57,14 @@ extension RouteViewModel {
     private var speedUnit: UnitSpeed { UnitSpeed(forLocale: Locale.autoupdatingCurrent, usage: .asProvided) }
     
     private var lastSpeedCalculation: Measurement<UnitSpeed> {
-        route.locations.last?.speed ?? Measurement<UnitSpeed>(value: 0, unit: .metersPerSecond)
+        locations.last?.speed ?? Measurement<UnitSpeed>(value: 0, unit: .metersPerSecond)
     }
     
     private var averageSpeedCalculation: Measurement<UnitSpeed> {
-        Measurement(value: vDSP.mean(route.locations.map(\.speed.value)), unit: .metersPerSecond)
+        Measurement(value: vDSP.mean(locations.map(\.speed.value)), unit: .metersPerSecond)
     }
     
     private var maxSpeedCalculation: Measurement<UnitSpeed> {
-        Measurement(value: vDSP.maximum(route.locations.map(\.speed.value)), unit: .metersPerSecond)
+        Measurement(value: vDSP.maximum(locations.map(\.speed.value)), unit: .metersPerSecond)
     }
 }

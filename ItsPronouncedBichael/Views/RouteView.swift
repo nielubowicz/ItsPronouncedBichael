@@ -8,8 +8,11 @@ struct RouteView: View {
     @State private var routeLocations = [CLLocationCoordinate2D]()
     @State private var position: MapCameraPosition = .userLocation(followsHeading: true, fallback: .automatic)
     
-    init(route: Route) {
+    @ObservedObject private var locationManager: LocationManager
+    
+    init(route: Route, locationManager: LocationManager) {
         viewModel = RouteViewModel(route: route)
+        self.locationManager = locationManager
     }
     
     var body: some View {
@@ -28,7 +31,11 @@ struct RouteView: View {
             .overlay(alignment: .bottomTrailing) {
                 VStack(alignment: .trailing, spacing: 0) {
                     if viewModel.showEndRoute {
-                        Button { let _ = LocationManager.shared.endRoute() } label: { Label("", systemImage: "stop.circle").font(.title) }
+                        Button {
+                            viewModel.route.locations = viewModel.locations
+                            viewModel.route.end = .now
+                            locationManager.endRoute()
+                        } label: { Label("", systemImage: "stop.circle").font(.title) }
                             .padding(24)
                             .background(Color(UIColor.darkGray).opacity(0.4))
                             .frame(maxWidth: .infinity)
@@ -89,11 +96,9 @@ struct RouteView: View {
         .task {
             routeLocations = await viewModel.mapLocations()
         }
-        .onChange(of: viewModel.route.locations) { _, _ in
-            Task {
-                try? Task.checkCancellation()
-                routeLocations = await viewModel.mapLocations()
-            }
+        .onReceive(locationManager.$locations) { locations in
+            viewModel.locations = locations
+            routeLocations = viewModel.mapLocations()
         }
     }
     

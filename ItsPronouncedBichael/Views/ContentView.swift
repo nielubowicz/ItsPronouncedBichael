@@ -15,13 +15,14 @@ struct ContentView: View {
     @Query private var items: [Route]
     
     @State private var currentRoute: Route?
+    let locationManager = LocationManager()
     
     var body: some View {
         NavigationSplitView {
             List {
                 ForEach(items) { item in
                     NavigationLink {
-                        RouteView(route: item)
+                        RouteView(route: item, locationManager: locationManager)
                     } label: {
                         Text(item.start ?? .now, format: Date.FormatStyle(date: .numeric, time: .standard))
                     }
@@ -42,19 +43,19 @@ struct ContentView: View {
             Text("Select an item")
         }
         .onAppear {
-            LocationManager.shared.beginUpdates()
+            locationManager.beginUpdates()
             NotificationCenter.default.addObserver(
                 forName: UIApplication.didEnterBackgroundNotification,
                 object: nil,
                 queue: .main) { _ in
-                    LocationManager.shared.beginBackgroundUpdates()
+                    locationManager.beginBackgroundUpdates()
                 }
             
             NotificationCenter.default.addObserver(
                 forName: UIApplication.willEnterForegroundNotification,
                 object: nil,
                 queue: .main) { _ in
-                    LocationManager.shared.endBackgroundUpdates()
+                    locationManager.endBackgroundUpdates()
                 }
         }
     }
@@ -65,15 +66,14 @@ struct ContentView: View {
             // TODO: Don't update the Model so often
             // Find a way to batch, stream or collect location updates without
             // changing the Route object at every update.
-            LocationManager.shared.startRoute(currentRoute)
+            currentRoute.start = .now
+            locationManager.startRoute()
             modelContext.insert(currentRoute)
         }
     }
 
     private func deleteItems(offsets: IndexSet) {
         withAnimation {
-            self.currentRoute = LocationManager.shared.endRoute()
-            
             for index in offsets {
                 modelContext.delete(items[index])
             }

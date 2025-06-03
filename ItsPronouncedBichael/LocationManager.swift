@@ -4,19 +4,12 @@ import SwiftUI
 class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
     private let manager = CLLocationManager()
     private let geocoder = CLGeocoder()
-    private var route: Route?
 
     private var backgroundActivitySession: CLBackgroundActivitySession?
     private var backgroundLocations = [RouteLocation]()
     
-    private static var _shared: LocationManager = LocationManager()
-    static var shared: LocationManager {
-        return _shared
-    }
-    
-    private override init() {
-        super.init()
-    }
+    @Published private(set) var locations = [RouteLocation]()
+    @Published private(set) var isPaused = false
     
     func beginUpdates() {
         manager.delegate = self
@@ -44,16 +37,15 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
     
     func endBackgroundUpdates() {
         backgroundActivitySession?.invalidate()
-        route?.locations.append(contentsOf: backgroundLocations)
-        route?.locations.sort()
+        locations.append(contentsOf: backgroundLocations)
+        locations.sort()
         backgroundLocations.removeAll()
     }
     
     private var routeTask: Task<Void, Never>?
     
-    func startRoute(_ route: Route) {
-        route.start = .now
-        self.route = route
+    func startRoute() {
+        isPaused = false
         manager.startUpdatingLocation()
         routeTask = Task { @MainActor in
             do {
@@ -61,7 +53,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
                 for try await update in CLLocationUpdate.liveUpdates() {
                     try Task.checkCancellation()
                     guard let location = update.location else { continue }
-                    route.locations.append(RouteLocation(location))
+                    locations.append(RouteLocation(location))
                 }
             } catch {
                 print(error)
@@ -69,10 +61,14 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
         }
     }
     
-    func endRoute() -> Route {
+    func pauseRoute() {
+        isPaused = true
         routeTask?.cancel()
-        route?.end = .now
-        return route ?? Route(initialRoute: [CLLocation]())
+    }
+    
+    func endRoute() {
+        isPaused = false
+        routeTask?.cancel()
     }
     
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
@@ -93,14 +89,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
             print("L10n.Error.Location.unknown", manager.authorizationStatus)
         }
     }
-    
-//    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-//        Task { @MainActor in
-//            try Task.checkCancellation()
-//            route?.locations.append(contentsOf: locations.map { RouteLocation($0) })
-//        }
-//    }
-    
+
     func locationManager(_ manager: CLLocationManager, didFailWithError error: any Error) {
         print(error)
     }
