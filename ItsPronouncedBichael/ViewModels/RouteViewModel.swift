@@ -1,10 +1,12 @@
 import Accelerate
 import CoreLocation
 
+// TODO: Make Active and Completed RouteViewModel
 struct RouteViewModel {
     let route: Route
     
     var locations = [RouteLocation]()
+    private(set) var mappedLocations = [CLLocationCoordinate2D]()
     
     var showTraffic = true
     
@@ -30,6 +32,16 @@ struct RouteViewModel {
     
     var endDate: String {
         route.end?.formatted(date: .omitted, time: .shortened) ?? ""
+    }
+    
+    mutating func append(_ location: RouteLocation) {
+        mappedLocations.append(CLLocationCoordinate2DMake(location.latitude, location.longitude))
+        locations.append(location)
+    }
+    
+    mutating func append(contentsOf locations: [RouteLocation]) {
+        mappedLocations.append(contentsOf: locations.map { CLLocationCoordinate2DMake($0.latitude, $0.longitude) })
+        self.locations.append(contentsOf: locations)
     }
     
     func routeLength() async -> String {
