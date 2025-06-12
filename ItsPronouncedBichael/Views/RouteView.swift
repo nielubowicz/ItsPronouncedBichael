@@ -100,6 +100,12 @@ struct RouteView: View {
             viewModel.locations = locations
             routeLocations = viewModel.mapLocations()
         }
+        .onAppear {
+            UIApplication.shared.isIdleTimerDisabled = true
+        }
+        .onDisappear {
+            UIApplication.shared.isIdleTimerDisabled = false
+        }
     }
     
     @ViewBuilder
@@ -158,7 +164,7 @@ struct RouteView: View {
         )
         .mapOverlayLevel(level: .aboveRoads)
         .stroke(
-            Gradient(colors: [.blue.opacity(0.2), .blue]),
+            .blue,
             style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
         )
     }
