@@ -8,7 +8,8 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
     private var backgroundActivitySession: CLBackgroundActivitySession?
     private var backgroundLocations = [RouteLocation]()
     
-    @Published private(set) var locations = [RouteLocation]()
+    @Published private(set) var lastLocation = CLLocation(latitude: 0, longitude: 0)
+    private(set) var locations = [RouteLocation]()
     @Published private(set) var isPaused = false
     
     func beginUpdates() {
@@ -19,6 +20,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
     }
     
     func beginBackgroundUpdates() {
+        manager.showsBackgroundLocationIndicator = true
         Task {
             backgroundActivitySession = CLBackgroundActivitySession()
             do {
@@ -36,6 +38,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
     }
     
     func endBackgroundUpdates() {
+        manager.showsBackgroundLocationIndicator = false
         backgroundActivitySession?.invalidate()
         locations.append(contentsOf: backgroundLocations)
         locations.sort()
@@ -53,6 +56,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
                 for try await update in CLLocationUpdate.liveUpdates() {
                     try Task.checkCancellation()
                     guard let location = update.location else { continue }
+                    lastLocation = location
                     locations.append(RouteLocation(location))
                 }
             } catch {
@@ -69,6 +73,8 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
     func endRoute() {
         isPaused = false
         routeTask?.cancel()
+        backgroundLocations.removeAll()
+        locations.removeAll()
     }
     
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
@@ -81,7 +87,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
             manager.requestWhenInUseAuthorization()
         case .authorizedWhenInUse,
                 .authorizedAlways:
-            manager.showsBackgroundLocationIndicator = true
+            break
         case .denied,
                 .restricted:
             print("L10n.Error.Location.notEnabled")

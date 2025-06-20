@@ -3,16 +3,10 @@ import SwiftUI
 
 struct RouteView: View {
     @State var viewModel: RouteViewModel
-    
-    @State private var lastDistance = Measurement<UnitLength>(value: 0, unit: .meters).formatted()
-    @State private var routeLocations = [CLLocationCoordinate2D]()
     @State private var position: MapCameraPosition = .userLocation(followsHeading: true, fallback: .automatic)
     
-    @ObservedObject private var locationManager: LocationManager
-    
     init(route: Route, locationManager: LocationManager) {
-        viewModel = RouteViewModel(route: route)
-        self.locationManager = locationManager
+        viewModel = RouteViewModel(route: route, locationManager: locationManager)
     }
     
     var body: some View {
@@ -32,13 +26,10 @@ struct RouteView: View {
                 VStack(alignment: .trailing, spacing: 0) {
                     if viewModel.showEndRoute {
                         Button {
-                            viewModel.route.locations = viewModel.locations
-                            viewModel.route.end = .now
-                            locationManager.endRoute()
-                        } label: { Label("", systemImage: "stop.circle").font(.title) }
+                            viewModel.isPaused ? viewModel.resume() : viewModel.pause()
+                        } label: { Label("", systemImage: viewModel.isPaused ? "play.circle" : "pause.circle").font(.title) }
                             .padding(24)
                             .background(Color(UIColor.darkGray).opacity(0.4))
-                            .frame(maxWidth: .infinity)
                             .clipShape(
                                 UnevenRoundedRectangle(
                                     topLeadingRadius: 16,
@@ -57,10 +48,21 @@ struct RouteView: View {
                                     style: .continuous
                                 )
                             )
+                        
+                        Divider()
+                            .foregroundStyle(.black)
+                        
+                        Button {
+                            viewModel.stop()
+                        } label: { Label("", systemImage: "stop.circle").font(.title) }
+                            .padding(24)
+                            .background(Color(UIColor.darkGray).opacity(0.4))
+                            .clipShape(Rectangle())
+                            .contentShape(Rectangle())
                     }
                     
-                    Color(.black)
-                        .frame(height: 1)
+                    Divider()
+                        .foregroundStyle(.black)
                     
                     Button { viewModel.showTraffic.toggle() } label: { Label("", systemImage: viewModel.showTraffic ? "car.fill" : "car").font(.title)
                             .padding(24)
@@ -93,15 +95,9 @@ struct RouteView: View {
                 }
             }
         }
-        .task {
-            routeLocations = await viewModel.mapLocations()
-        }
-        .onReceive(locationManager.$locations) { locations in
-            viewModel.locations = locations
-            routeLocations = viewModel.mapLocations()
-        }
         .onAppear {
             UIApplication.shared.isIdleTimerDisabled = true
+            viewModel.start()
         }
         .onDisappear {
             UIApplication.shared.isIdleTimerDisabled = false
@@ -124,29 +120,23 @@ struct RouteView: View {
                     .stroke(.black, lineWidth: 1)
             }
             
-            Text(viewModel.lastSpeed)
-                .font(.headline)
-                .fontWeight(.bold)
-                .padding()
-                .background(.gray.opacity(0.1))
-                .padding()
-                .overlay {
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(.black, lineWidth: 1)
-                }
+            VStack {
+                Text(viewModel.lastSpeed)
+                    .font(.headline)
+                    .fontWeight(.bold)
+                Text(viewModel.duration.formatted(.time(pattern: .hourMinuteSecond(padHourToLength: 1))))
+                    .font(.subheadline)
+            }
+            .padding()
+            .overlay {
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(.black, lineWidth: 1)
+            }
             
             VStack {
                 Text(viewModel.averageSpeed)
                 Text(viewModel.maxSpeed)
-                Text(lastDistance)
-                    .task {
-                        lastDistance = await viewModel.routeLength()
-                    }
-                    .onChange(of: routeLocations) { _,_ in
-                        Task {
-                            lastDistance = await viewModel.routeLength()
-                        }
-                    }
+                Text(viewModel.routeDistance.converted(to: .miles).formatted(.measurement(width: .abbreviated, usage: .road)))
             }
             .padding(.horizontal)
             .overlay {
@@ -159,12 +149,12 @@ struct RouteView: View {
     @MapContentBuilder
     var routeLine: some MapContent {
         MapPolyline(
-            coordinates: routeLocations,
+            coordinates: viewModel.mappedLocations,
             contourStyle: .straight
         )
         .mapOverlayLevel(level: .aboveRoads)
         .stroke(
-            .blue,
+            Color.accentColor,
             style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
         )
     }

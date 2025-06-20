@@ -15,7 +15,7 @@ struct ContentView: View {
     @Query private var items: [Route]
     
     @State private var currentRoute: Route?
-    let locationManager = LocationManager()
+    @State var locationManager = LocationManager()
     
     var body: some View {
         NavigationSplitView {
@@ -24,7 +24,7 @@ struct ContentView: View {
                     NavigationLink {
                         RouteView(route: item, locationManager: locationManager)
                     } label: {
-                        Text(item.start ?? .now, format: Date.FormatStyle(date: .numeric, time: .standard))
+                        RouteListItemView(route: item)
                     }
                 }
                 .onDelete(perform: deleteItems)
