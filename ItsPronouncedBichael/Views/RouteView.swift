@@ -65,26 +65,26 @@ struct RouteView: View {
                         .foregroundStyle(.black)
                     
                     Button { viewModel.showTraffic.toggle() } label: { Label("", systemImage: viewModel.showTraffic ? "car.fill" : "car").font(.title)
-                            .padding(24)
-                            .background(Color(UIColor.darkGray).opacity(0.4))
-                            .clipShape(
-                                UnevenRoundedRectangle(
-                                    topLeadingRadius: viewModel.showEndRoute ? 0 : 16,
-                                    bottomLeadingRadius: 0,
-                                    bottomTrailingRadius: 0,
-                                    topTrailingRadius: viewModel.showEndRoute ? 0 : 16,
-                                    style: .continuous
-                                )
+                        .padding(24)
+                        .background(Color(UIColor.darkGray).opacity(0.4))
+                        .clipShape(
+                            UnevenRoundedRectangle(
+                                topLeadingRadius: viewModel.showEndRoute ? 0 : 16,
+                                bottomLeadingRadius: 0,
+                                bottomTrailingRadius: 0,
+                                topTrailingRadius: viewModel.showEndRoute ? 0 : 16,
+                                style: .continuous
                             )
-                            .contentShape(
-                                UnevenRoundedRectangle(
-                                    topLeadingRadius: viewModel.showEndRoute ? 0 : 16,
-                                    bottomLeadingRadius: 0,
-                                    bottomTrailingRadius: 0,
-                                    topTrailingRadius: viewModel.showEndRoute ? 0 : 16,
-                                    style: .continuous
-                                )
+                        )
+                        .contentShape(
+                            UnevenRoundedRectangle(
+                                topLeadingRadius: viewModel.showEndRoute ? 0 : 16,
+                                bottomLeadingRadius: 0,
+                                bottomTrailingRadius: 0,
+                                topTrailingRadius: viewModel.showEndRoute ? 0 : 16,
+                                style: .continuous
                             )
+                        )
                     }
                 }
                 .fixedSize(horizontal: true, vertical: false)
@@ -163,6 +163,6 @@ struct RouteView: View {
 extension CLLocationCoordinate2D: @retroactive Equatable {
     public static func == (lhs: CLLocationCoordinate2D, rhs: CLLocationCoordinate2D) -> Bool {
         lhs.latitude == rhs.latitude &&
-        lhs.longitude == rhs.longitude
+            lhs.longitude == rhs.longitude
     }
 }

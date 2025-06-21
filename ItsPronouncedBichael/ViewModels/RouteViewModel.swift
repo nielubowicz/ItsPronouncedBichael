@@ -25,9 +25,8 @@ class RouteViewModel {
     private(set) var duration = Duration.seconds(0)
     
     private(set) var isPaused = false
-    private var locationTracking: AnyCancellable?
-    private var backgroundLocationTracking: AnyCancellable?
     
+    private var locationTracking: AnyCancellable?
     private var dateEnteredBackground: Date?
     
     var showTraffic = true
@@ -88,28 +87,29 @@ extension RouteViewModel {
         NotificationCenter.default.addObserver(
             forName: UIApplication.didEnterBackgroundNotification,
             object: nil,
-            queue: .main) { [weak self] _ in
-                self?.timer?.invalidate()
-                self?.dateEnteredBackground = .now
-                self?.locationManager.beginBackgroundUpdates()
-            }
+            queue: .main)
+        { [weak self] _ in
+            self?.timer?.invalidate()
+            self?.dateEnteredBackground = .now
+            self?.locationManager.beginBackgroundUpdates()
+        }
         
         NotificationCenter.default.addObserver(
             forName: UIApplication.willEnterForegroundNotification,
             object: nil,
-            queue: .main) { [weak self] _ in
-                self?.locationManager.endBackgroundUpdates()
-                self?.duration += Duration.seconds(Date().timeIntervalSince(self?.dateEnteredBackground ?? Date()))
-                self?.dateEnteredBackground = nil
-                self?.startTimer()
-            }
+            queue: .main)
+        { [weak self] _ in
+            self?.locationManager.endBackgroundUpdates()
+            self?.duration += Duration.seconds(Date().timeIntervalSince(self?.dateEnteredBackground ?? Date()))
+            self?.dateEnteredBackground = nil
+            self?.startTimer()
+        }
     }
     
     func pause() {
         isPaused = true
         timer?.invalidate()
         locationTracking?.cancel()
-        backgroundLocationTracking?.cancel()
     }
     
     func resume() {
@@ -126,7 +126,6 @@ extension RouteViewModel {
         locationManager.endRoute()
         timer?.invalidate()
         locationTracking?.cancel()
-        backgroundLocationTracking?.cancel()
     }
 }
 
