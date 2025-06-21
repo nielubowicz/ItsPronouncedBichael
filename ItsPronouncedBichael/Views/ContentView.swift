@@ -44,19 +44,6 @@ struct ContentView: View {
         }
         .onAppear {
             locationManager.beginUpdates()
-            NotificationCenter.default.addObserver(
-                forName: UIApplication.didEnterBackgroundNotification,
-                object: nil,
-                queue: .main) { _ in
-                    locationManager.beginBackgroundUpdates()
-                }
-            
-            NotificationCenter.default.addObserver(
-                forName: UIApplication.willEnterForegroundNotification,
-                object: nil,
-                queue: .main) { _ in
-                    locationManager.endBackgroundUpdates()
-                }
         }
     }
 
@@ -67,7 +54,6 @@ struct ContentView: View {
             // Find a way to batch, stream or collect location updates without
             // changing the Route object at every update.
             currentRoute.start = .now
-            locationManager.startRoute()
             modelContext.insert(currentRoute)
         }
     }

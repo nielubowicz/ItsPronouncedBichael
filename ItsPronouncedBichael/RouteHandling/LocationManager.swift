@@ -6,10 +6,8 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
     private let geocoder = CLGeocoder()
 
     private var backgroundActivitySession: CLBackgroundActivitySession?
-    private var backgroundLocations = [RouteLocation]()
-    
+    private var backgroundTask: Task<Void, Never>?
     @Published private(set) var lastLocation = CLLocation(latitude: 0, longitude: 0)
-    private(set) var locations = [RouteLocation]()
     @Published private(set) var isPaused = false
     
     func beginUpdates() {
@@ -21,15 +19,15 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
     
     func beginBackgroundUpdates() {
         manager.showsBackgroundLocationIndicator = true
-        Task {
+        backgroundTask = Task {
+            routeTask?.cancel()
             backgroundActivitySession = CLBackgroundActivitySession()
             do {
                 try Task.checkCancellation()
                 for try await update in CLLocationUpdate.liveUpdates() {
                     try Task.checkCancellation()
-                    if let location = update.location {
-                        backgroundLocations.append(RouteLocation(location))
-                    }
+                    guard let location = update.location else { continue }
+                    lastLocation = location
                 }
             } catch {
                 print(error)
@@ -39,10 +37,9 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
     
     func endBackgroundUpdates() {
         manager.showsBackgroundLocationIndicator = false
+        backgroundTask?.cancel()
         backgroundActivitySession?.invalidate()
-        locations.append(contentsOf: backgroundLocations)
-        locations.sort()
-        backgroundLocations.removeAll()
+        startRouteTask()
     }
     
     private var routeTask: Task<Void, Never>?
@@ -50,19 +47,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
     func startRoute() {
         isPaused = false
         manager.startUpdatingLocation()
-        routeTask = Task { @MainActor in
-            do {
-                try Task.checkCancellation()
-                for try await update in CLLocationUpdate.liveUpdates() {
-                    try Task.checkCancellation()
-                    guard let location = update.location else { continue }
-                    lastLocation = location
-                    locations.append(RouteLocation(location))
-                }
-            } catch {
-                print(error)
-            }
-        }
+        startRouteTask()
     }
     
     func pauseRoute() {
@@ -73,8 +58,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
     func endRoute() {
         isPaused = false
         routeTask?.cancel()
-        backgroundLocations.removeAll()
-        locations.removeAll()
+        lastLocation = CLLocation(latitude: 0, longitude: 0)
     }
     
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
@@ -101,3 +85,19 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
     }
 }
 
+extension LocationManager {
+    private func startRouteTask() {
+        routeTask = Task { @MainActor in
+            do {
+                try Task.checkCancellation()
+                for try await update in CLLocationUpdate.liveUpdates() {
+                    try Task.checkCancellation()
+                    guard let location = update.location else { continue }
+                    lastLocation = location
+                }
+            } catch {
+                print(error)
+            }
+        }
+    }
+}

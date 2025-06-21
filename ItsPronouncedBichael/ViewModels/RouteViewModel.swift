@@ -18,15 +18,17 @@ class RouteViewModel {
         self.showTraffic = showTraffic
     }
     
-    private(set) var locations: [RouteLocation] = []
-    private(set) var mappedLocations: [CLLocationCoordinate2D] = []
-    private(set) var mappedSpeeds: [Double] = []
-    private(set) var routeDistance: Measurement<UnitLength> = .init(value: 0, unit: .meters)
+    private(set) var locations = [RouteLocation]()
+    private(set) var mappedLocations = [CLLocationCoordinate2D]()
+    private(set) var mappedSpeeds = [Double]()
+    private(set) var routeDistance = Measurement<UnitLength>(value: 0, unit: .meters)
     private(set) var duration = Duration.seconds(0)
-    
     
     private(set) var isPaused = false
     private var locationTracking: AnyCancellable?
+    private var backgroundLocationTracking: AnyCancellable?
+    
+    private var dateEnteredBackground: Date?
     
     var showTraffic = true
     
@@ -82,12 +84,32 @@ extension RouteViewModel {
         locationTracking = locationManager.$lastLocation.sink { [weak self] location in
             self?.append(location)
         }
+        
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.didEnterBackgroundNotification,
+            object: nil,
+            queue: .main) { [weak self] _ in
+                self?.timer?.invalidate()
+                self?.dateEnteredBackground = .now
+                self?.locationManager.beginBackgroundUpdates()
+            }
+        
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.willEnterForegroundNotification,
+            object: nil,
+            queue: .main) { [weak self] _ in
+                self?.locationManager.endBackgroundUpdates()
+                self?.duration += Duration.seconds(Date().timeIntervalSince(self?.dateEnteredBackground ?? Date()))
+                self?.dateEnteredBackground = nil
+                self?.startTimer()
+            }
     }
     
     func pause() {
         isPaused = true
         timer?.invalidate()
         locationTracking?.cancel()
+        backgroundLocationTracking?.cancel()
     }
     
     func resume() {
@@ -104,6 +126,7 @@ extension RouteViewModel {
         locationManager.endRoute()
         timer?.invalidate()
         locationTracking?.cancel()
+        backgroundLocationTracking?.cancel()
     }
 }
 
@@ -111,7 +134,7 @@ extension RouteViewModel {
 
 extension RouteViewModel {
     private func append(_ location: CLLocation) {
-        guard location != CLLocation(latitude: 0, longitude: 0) else { return }
+        guard location.coordinate != CLLocationCoordinate2DMake(0, 0) else { return }
         
         if let lastLocation = locations.last {
             routeDistance = routeDistance + Measurement<UnitLength>(value: location.distance(from: CLLocation(lastLocation)), unit: .meters)
