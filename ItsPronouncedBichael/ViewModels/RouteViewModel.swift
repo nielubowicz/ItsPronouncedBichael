@@ -80,9 +80,12 @@ extension RouteViewModel {
         route.start = .now
         startTimer()
         locationManager.startRoute()
-        locationTracking = locationManager.$lastLocation.sink { [weak self] location in
-            self?.append(location)
-        }
+        locationTracking = locationManager.$lastLocation
+            .collect(5)
+            .sink { [weak self] locations in
+                guard let location = locations.last else { return }
+                self?.append(location)
+            }
         
         NotificationCenter.default.addObserver(
             forName: UIApplication.didEnterBackgroundNotification,
@@ -115,9 +118,12 @@ extension RouteViewModel {
     func resume() {
         isPaused = false
         startTimer()
-        locationTracking = locationManager.$lastLocation.sink { [weak self] location in
-            self?.append(location)
-        }
+        locationTracking = locationManager.$lastLocation
+            .collect(5)
+            .sink { [weak self] locations in
+                guard let location = locations.last else { return }
+                self?.append(location)
+            }
     }
     
     func stop() {
