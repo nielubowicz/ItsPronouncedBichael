@@ -5,7 +5,7 @@ import CoreLocation
 final class Route {
     var start: Date?
     var end: Date?
-    var locations: [RouteLocation]
+    var locations: [RouteLocation] = [RouteLocation]()
     
     init(initialRoute: [CLLocation]) {
         self.locations = initialRoute.map { RouteLocation($0) }

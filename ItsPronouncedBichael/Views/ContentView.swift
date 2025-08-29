@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 
+import DependencyInjection
 import CoreLocation
 
 struct ContentView: View {
@@ -15,7 +16,7 @@ struct ContentView: View {
     @Query private var items: [Route]
     
     @State private var currentRoute: Route?
-    @State var locationManager = LocationManager()
+    @State var locationManager = InjectedValues[\.locationManager]
     
     var body: some View {
         NavigationSplitView {

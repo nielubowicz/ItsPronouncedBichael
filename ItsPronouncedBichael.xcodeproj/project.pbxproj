@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		0423C1B42E3A743C001A6671 /* DependencyInjection in Frameworks */ = {isa = PBXBuildFile; productRef = 0423C1B32E3A743C001A6671 /* DependencyInjection */; };
+		048DB7A52E620FA700992B09 /* DependencyInjection in Frameworks */ = {isa = PBXBuildFile; productRef = 048DB7A42E620FA700992B09 /* DependencyInjection */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		04C2E7232DE2339B00D67924 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -65,6 +70,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0423C1B42E3A743C001A6671 /* DependencyInjection in Frameworks */,
+				048DB7A52E620FA700992B09 /* DependencyInjection in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -125,6 +132,8 @@
 			);
 			name = ItsPronouncedBichael;
 			packageProductDependencies = (
+				0423C1B32E3A743C001A6671 /* DependencyInjection */,
+				048DB7A42E620FA700992B09 /* DependencyInjection */,
 			);
 			productName = ItsPronouncedBichael;
 			productReference = 04C2E7132DE2339800D67924 /* ItsPronouncedBichael.app */;
@@ -208,6 +217,9 @@
 			);
 			mainGroup = 04C2E70A2DE2339800D67924;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				048DB7A32E620FA600992B09 /* XCRemoteSwiftPackageReference "dependencyInjection" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 04C2E7142DE2339800D67924 /* Products */;
 			projectDirPath = "";
@@ -408,6 +420,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = ItsPronouncedBichael/ItsPronouncedBichael.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 9RH4L8S898;
@@ -442,6 +455,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = ItsPronouncedBichael/ItsPronouncedBichael.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 9RH4L8S898;
@@ -583,6 +597,29 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		048DB7A32E620FA600992B09 /* XCRemoteSwiftPackageReference "dependencyInjection" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/nielubowicz/dependencyInjection";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		0423C1B32E3A743C001A6671 /* DependencyInjection */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DependencyInjection;
+		};
+		048DB7A42E620FA700992B09 /* DependencyInjection */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 048DB7A32E620FA600992B09 /* XCRemoteSwiftPackageReference "dependencyInjection" */;
+			productName = DependencyInjection;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 04C2E70B2DE2339800D67924 /* Project object */;
 }

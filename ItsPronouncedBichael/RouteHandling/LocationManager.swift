@@ -1,5 +1,17 @@
 import CoreLocation
+import DependencyInjection
 import SwiftUI
+
+private struct LocationManagerKey: InjectionKey {
+    static var currentValue: LocationManager = LocationManager()
+}
+
+extension InjectedValues {
+    var locationManager: LocationManager {
+        get { Self[LocationManagerKey.self] }
+        set { Self[LocationManagerKey.self] = newValue }
+    }
+}
 
 class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
     private let manager = CLLocationManager()
