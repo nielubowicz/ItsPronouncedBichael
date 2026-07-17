@@ -15,7 +15,6 @@ extension InjectedValues {
 
 class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
     private let manager = CLLocationManager()
-    private let geocoder = CLGeocoder()
 
     private var backgroundActivitySession: CLBackgroundActivitySession?
     private var backgroundTask: Task<Void, Never>?
@@ -35,7 +34,6 @@ class LocationManager: NSObject, CLLocationManagerDelegate, ObservableObject {
             routeTask?.cancel()
             backgroundActivitySession = CLBackgroundActivitySession()
             do {
-                try Task.checkCancellation()
                 for try await update in CLLocationUpdate.liveUpdates() {
                     try Task.checkCancellation()
                     guard let location = update.location else { continue }
@@ -101,7 +99,6 @@ extension LocationManager {
     private func startRouteTask() {
         routeTask = Task { @MainActor in
             do {
-                try Task.checkCancellation()
                 for try await update in CLLocationUpdate.liveUpdates() {
                     try Task.checkCancellation()
                     guard let location = update.location else { continue }
