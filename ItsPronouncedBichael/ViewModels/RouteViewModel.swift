@@ -139,6 +139,7 @@ extension RouteViewModel {
     func stop() {
         route.end = .now
         route.locations = locations
+        route.recomputeStats()
         renderedRouteCoordinates = mappedLocations
         locationManager.endRoute()
         timer?.invalidate()
