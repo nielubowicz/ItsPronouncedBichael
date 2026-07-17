@@ -23,6 +23,9 @@ class RouteViewModel {
         self.renderedRouteCoordinates = mappedLocations
         self.locationManager = locationManager
         self.showTraffic = showTraffic
+        if let start = route.start, let end = route.end {
+            self.duration = .seconds(end.timeIntervalSince(start))
+        }
     }
 
     private(set) var locations = [RouteLocation]()
