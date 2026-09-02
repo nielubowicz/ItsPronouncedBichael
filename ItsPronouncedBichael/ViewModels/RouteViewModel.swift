@@ -12,14 +12,16 @@ class RouteViewModel {
     private var timer: Timer?
     
     init(route: Route, locationManager: LocationManager, showTraffic: Bool = true) {
-        let mappedLocations = route.locations.map {
+        route.migratePointsIfNeeded()
+        let routeLocations = route.allLocations
+        let mappedLocations = routeLocations.map {
             CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
         }
         self.route = route
-        self.locations = route.locations
+        self.locations = routeLocations
         self.mappedLocations = mappedLocations
-        self.mappedSpeeds = route.locations.map { $0.speed.value }
-        self.routeDistance = Self.totalDistance(for: route.locations)
+        self.mappedSpeeds = routeLocations.map { $0.speed.value }
+        self.routeDistance = Self.totalDistance(for: routeLocations)
         self.renderedRouteCoordinates = mappedLocations
         self.locationManager = locationManager
         self.showTraffic = showTraffic
@@ -138,7 +140,8 @@ extension RouteViewModel {
 
     func stop() {
         route.end = .now
-        route.locations = locations
+        route.points = locations.map { RoutePoint($0) }
+        route.locations = []
         route.recomputeStats()
         renderedRouteCoordinates = mappedLocations
         locationManager.endRoute()
