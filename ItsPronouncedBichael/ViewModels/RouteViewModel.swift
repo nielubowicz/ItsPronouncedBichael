@@ -12,14 +12,27 @@ class RouteViewModel {
     private var timer: Timer?
     
     init(route: Route, locationManager: LocationManager, showTraffic: Bool = true) {
+        route.migratePointsIfNeeded()
+        let routeLocations = route.allLocations
+        let mappedLocations = routeLocations.map {
+            CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
+        }
         self.route = route
-        self.locations = route.locations
+        self.locations = routeLocations
+        self.mappedLocations = mappedLocations
+        self.mappedSpeeds = routeLocations.map { $0.speed.value }
+        self.routeDistance = Self.totalDistance(for: routeLocations)
+        self.renderedRouteCoordinates = mappedLocations
         self.locationManager = locationManager
         self.showTraffic = showTraffic
+        if let start = route.start, let end = route.end {
+            self.duration = .seconds(end.timeIntervalSince(start))
+        }
     }
-    
+
     private(set) var locations = [RouteLocation]()
     private(set) var mappedLocations = [CLLocationCoordinate2D]()
+    private(set) var renderedRouteCoordinates = [CLLocationCoordinate2D]()
     private(set) var mappedSpeeds = [Double]()
     private(set) var routeDistance = Measurement<UnitLength>(value: 0, unit: .meters)
     private(set) var duration = Duration.seconds(0)
@@ -71,22 +84,26 @@ extension RouteViewModel {
     private var maxSpeedCalculation: Measurement<UnitSpeed> {
         Measurement(value: vDSP.maximum(mappedSpeeds), unit: .metersPerSecond)
     }
+
+    fileprivate static func totalDistance(for locations: [RouteLocation]) -> Measurement<UnitLength> {
+        let mapped = locations.map { CLLocation($0) }
+        return zip(mapped.dropLast(), mapped.dropFirst())
+            .map { $1.distance(from: $0) }
+            .map { Measurement<UnitLength>(value: $0, unit: .meters) }
+            .reduce(Measurement<UnitLength>(value: 0, unit: .meters), +)
+    }
 }
 
 // MARK: Route Management
 
 extension RouteViewModel {
     func start() {
+        guard showEndRoute else { return }
         route.start = .now
         startTimer()
         locationManager.startRoute()
-        locationTracking = locationManager.$lastLocation
-            .collect(5)
-            .sink { [weak self] locations in
-                guard let location = locations.last else { return }
-                self?.append(location)
-            }
-        
+        subscribeToLocationUpdates()
+
         NotificationCenter.default.addObserver(
             forName: UIApplication.didEnterBackgroundNotification,
             object: nil,
@@ -118,17 +135,15 @@ extension RouteViewModel {
     func resume() {
         isPaused = false
         startTimer()
-        locationTracking = locationManager.$lastLocation
-            .collect(5)
-            .sink { [weak self] locations in
-                guard let location = locations.last else { return }
-                self?.append(location)
-            }
+        subscribeToLocationUpdates()
     }
-    
+
     func stop() {
         route.end = .now
-        route.locations = locations
+        route.points = locations.map { RoutePoint($0) }
+        route.locations = []
+        route.recomputeStats()
+        renderedRouteCoordinates = mappedLocations
         locationManager.endRoute()
         timer?.invalidate()
         locationTracking?.cancel()
@@ -138,9 +153,27 @@ extension RouteViewModel {
 // MARK: Location management
 
 extension RouteViewModel {
+    private static let minimumDistanceBetweenPoints: CLLocationDistance = 8
+
+    private func subscribeToLocationUpdates() {
+        locationTracking = locationManager.$lastLocation
+            .sink { [weak self] location in
+                self?.ingest(location)
+            }
+    }
+
+    func ingest(_ location: CLLocation) {
+        guard location.coordinate != CLLocationCoordinate2DMake(0, 0) else { return }
+        if let lastLocation = locations.last,
+           location.distance(from: CLLocation(lastLocation)) < Self.minimumDistanceBetweenPoints {
+            return
+        }
+        append(location)
+    }
+
     private func append(_ location: CLLocation) {
         guard location.coordinate != CLLocationCoordinate2DMake(0, 0) else { return }
-        
+
         if let lastLocation = locations.last {
             routeDistance = routeDistance + Measurement<UnitLength>(value: location.distance(from: CLLocation(lastLocation)), unit: .meters)
         }
@@ -155,8 +188,9 @@ extension RouteViewModel {
 extension RouteViewModel {
     private func startTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
-            guard timer.isValid else { return }
-            self?.duration += Duration.seconds(timer.timeInterval)
+            guard let self, timer.isValid else { return }
+            self.duration += Duration.seconds(timer.timeInterval)
+            self.renderedRouteCoordinates = self.mappedLocations
         }
     }
 }

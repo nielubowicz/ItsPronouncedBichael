@@ -149,7 +149,7 @@ struct RouteView: View {
     @MapContentBuilder
     var routeLine: some MapContent {
         MapPolyline(
-            coordinates: viewModel.mappedLocations,
+            coordinates: viewModel.renderedRouteCoordinates,
             contourStyle: .straight
         )
         .mapOverlayLevel(level: .aboveRoads)

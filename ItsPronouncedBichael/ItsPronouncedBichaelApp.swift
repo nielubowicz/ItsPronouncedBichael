@@ -12,7 +12,8 @@ import SwiftData
 struct ItsPronouncedBichaelApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Route.self
+            Route.self,
+            RoutePoint.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false, cloudKitDatabase: .automatic)
 
