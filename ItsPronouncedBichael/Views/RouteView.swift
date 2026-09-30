@@ -3,10 +3,13 @@ import SwiftUI
 
 struct RouteView: View {
     @State var viewModel: RouteViewModel
-    @State private var position: MapCameraPosition = .userLocation(followsHeading: true, fallback: .automatic)
-    
+    @State private var position: MapCameraPosition
+
     init(route: Route, locationManager: LocationManager) {
-        viewModel = RouteViewModel(route: route, locationManager: locationManager)
+        let viewModel = RouteViewModel(route: route, locationManager: locationManager)
+        self.viewModel = viewModel
+        position = viewModel.completedRouteRect.map { .rect($0) }
+            ?? .userLocation(followsHeading: true, fallback: .automatic)
     }
     
     var body: some View {
@@ -54,6 +57,9 @@ struct RouteView: View {
                         
                         Button {
                             viewModel.stop()
+                            if let rect = viewModel.completedRouteRect {
+                                withAnimation { position = .rect(rect) }
+                            }
                         } label: { Label("", systemImage: "stop.circle").font(.title) }
                             .padding(24)
                             .background(Color(UIColor.darkGray).opacity(0.4))

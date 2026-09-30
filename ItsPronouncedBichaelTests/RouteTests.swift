@@ -1,4 +1,5 @@
 import CoreLocation
+import MapKit
 import XCTest
 @testable import ItsPronouncedBichael
 
@@ -28,6 +29,38 @@ final class RouteTests: XCTestCase {
 
         XCTAssertEqual(route.points?.count, 5)
         XCTAssertGreaterThan(route.cachedDistance, 0)
+    }
+
+    func testCompletedRouteRectContainsWholeRouteWithMargin() throws {
+        let locations = Self.syntheticLocations(count: 50)
+        let route = Route()
+        route.end = .now
+        route.points = locations.map { RoutePoint(RouteLocation($0)) }
+
+        let rect = try XCTUnwrap(RouteViewModel(route: route, locationManager: LocationManager()).completedRouteRect)
+
+        let margin = rect.width * 0.1
+        let inset = rect.insetBy(dx: margin, dy: margin)
+        for location in locations {
+            XCTAssertTrue(inset.contains(MKMapPoint(location.coordinate)))
+        }
+    }
+
+    func testCompletedRouteRectIsNilWhileRouteIsActive() {
+        let route = Route()
+        route.points = Self.syntheticLocations(count: 5).map { RoutePoint(RouteLocation($0)) }
+
+        XCTAssertNil(RouteViewModel(route: route, locationManager: LocationManager()).completedRouteRect)
+    }
+
+    func testFramingRectHasMinimumSizeForSinglePoint() throws {
+        let coordinate = CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
+
+        let rect = try XCTUnwrap(RouteViewModel.framingRect(for: [coordinate]))
+
+        XCTAssertGreaterThan(rect.width, 0)
+        XCTAssertGreaterThan(rect.height, 0)
+        XCTAssertTrue(rect.contains(MKMapPoint(coordinate)))
     }
 
     private static func syntheticLocations(count: Int) -> [CLLocation] {

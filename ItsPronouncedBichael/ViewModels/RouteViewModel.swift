@@ -1,6 +1,7 @@
 import Accelerate
 import Combine
 import CoreLocation
+import MapKit
 import SwiftUI
 
 // TODO: Make Active and Completed RouteViewModel
@@ -66,6 +67,12 @@ class RouteViewModel {
     var endDate: String {
         route.end?.formatted(date: .omitted, time: .shortened) ?? ""
     }
+
+    /// The map area that frames the whole route, once it has been completed.
+    var completedRouteRect: MKMapRect? {
+        guard !showEndRoute else { return nil }
+        return Self.framingRect(for: mappedLocations)
+    }
 }
 
 extension RouteViewModel {
@@ -90,6 +97,27 @@ extension RouteViewModel {
             .map { $1.distance(from: $0) }
             .map { Measurement<UnitLength>(value: $0, unit: .meters) }
             .reduce(Measurement<UnitLength>(value: 0, unit: .meters), +)
+    }
+}
+
+// MARK: Map framing
+
+extension RouteViewModel {
+    /// Fraction of the route's size added on each side, so the line doesn't touch the map's edges.
+    private static let framingPadding = 0.15
+    /// Keeps very short (or single-point) routes from zooming in to street-furniture level.
+    private static let minimumFramingSpan: CLLocationDistance = 200
+
+    static func framingRect(for coordinates: [CLLocationCoordinate2D]) -> MKMapRect? {
+        guard let first = coordinates.first else { return nil }
+        let bounds = coordinates.dropFirst().reduce(MKMapRect(origin: MKMapPoint(first), size: MKMapSize())) { rect, coordinate in
+            rect.union(MKMapRect(origin: MKMapPoint(coordinate), size: MKMapSize()))
+        }
+        let center = MKMapPoint(x: bounds.midX, y: bounds.midY)
+        let minimumSpan = minimumFramingSpan * MKMapPointsPerMeterAtLatitude(center.coordinate.latitude)
+        let width = max(bounds.width, minimumSpan) * (1 + 2 * framingPadding)
+        let height = max(bounds.height, minimumSpan) * (1 + 2 * framingPadding)
+        return MKMapRect(x: center.x - width / 2, y: center.y - height / 2, width: width, height: height)
     }
 }
 
