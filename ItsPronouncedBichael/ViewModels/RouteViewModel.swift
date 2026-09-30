@@ -12,7 +12,6 @@ class RouteViewModel {
     private var timer: Timer?
     
     init(route: Route, locationManager: LocationManager, showTraffic: Bool = true) {
-        route.migratePointsIfNeeded()
         let routeLocations = route.allLocations
         let mappedLocations = routeLocations.map {
             CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
@@ -141,7 +140,6 @@ extension RouteViewModel {
     func stop() {
         route.end = .now
         route.points = locations.map { RoutePoint($0) }
-        route.locations = []
         route.recomputeStats()
         renderedRouteCoordinates = mappedLocations
         locationManager.endRoute()
