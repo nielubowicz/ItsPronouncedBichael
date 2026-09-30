@@ -18,6 +18,14 @@ final class RouteTests: XCTestCase {
         }
     }
 
+    func testAllLocationsAreInTimestampOrderRegardlessOfStorageOrder() {
+        let locations = Self.syntheticLocations(count: 20)
+        let route = Route()
+        route.points = locations.reversed().map { RoutePoint(RouteLocation($0)) }
+
+        XCTAssertEqual(route.allLocations.map(\.timestamp), locations.map(\.timestamp))
+    }
+
     func testStopWritesPointsAndStats() {
         let route = Route()
         let viewModel = RouteViewModel(route: route, locationManager: LocationManager())
