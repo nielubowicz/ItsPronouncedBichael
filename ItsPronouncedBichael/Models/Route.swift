@@ -18,8 +18,11 @@ final class Route {
 }
 
 extension Route {
+    /// SwiftData to-many relationships are unordered, so points must be sorted back into travel order.
     var allLocations: [RouteLocation] {
-        (points ?? []).map { RouteLocation($0) }
+        (points ?? [])
+            .sorted { $0.timestamp < $1.timestamp }
+            .map { RouteLocation($0) }
     }
 
     var distance: Measurement<UnitLength> {
