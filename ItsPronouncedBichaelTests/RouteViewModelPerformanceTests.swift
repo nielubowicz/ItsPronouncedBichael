@@ -6,7 +6,7 @@ final class RouteViewModelPerformanceTests: XCTestCase {
     func testIngestThinningPerformance() {
         let locations = Self.syntheticLocations(count: 10_000)
         measure {
-            let viewModel = RouteViewModel(route: Route(initialRoute: []), locationManager: LocationManager())
+            let viewModel = RouteViewModel(route: Route(), locationManager: LocationManager())
             for location in locations {
                 viewModel.ingest(location)
             }
@@ -14,7 +14,8 @@ final class RouteViewModelPerformanceTests: XCTestCase {
     }
 
     func testSeedingFromLargeHistoricalRoute() {
-        let route = Route(initialRoute: Self.syntheticLocations(count: 10_000))
+        let route = Route()
+        route.points = Self.syntheticLocations(count: 10_000).map { RoutePoint(RouteLocation($0)) }
         measure {
             _ = RouteViewModel(route: route, locationManager: LocationManager())
         }

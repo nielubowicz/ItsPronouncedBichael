@@ -13,7 +13,9 @@ import CoreLocation
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Route]
+    @Query(
+        sort: [SortDescriptor(\Route.start)]
+    ) private var items: [Route]
     
     @State private var currentRoute: Route?
     @State var locationManager = InjectedValues[\.locationManager]
@@ -22,13 +24,14 @@ struct ContentView: View {
         NavigationSplitView {
             List {
                 ForEach(items) { item in
-                    NavigationLink {
-                        RouteView(route: item, locationManager: locationManager)
-                    } label: {
+                    NavigationLink(value: item) {
                         RouteListItemView(route: item)
                     }
                 }
                 .onDelete(perform: deleteItems)
+            }
+            .navigationDestination(for: Route.self) { route in
+                RouteView(route: route, locationManager: locationManager)
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -50,7 +53,7 @@ struct ContentView: View {
 
     private func addItem() {
         withAnimation {
-            let currentRoute = Route(initialRoute: [CLLocation]())
+            let currentRoute = Route()
             // TODO: Don't update the Model so often
             // Find a way to batch, stream or collect location updates without
             // changing the Route object at every update.

@@ -19,6 +19,5 @@ struct RouteListItemView: View {
             Spacer()
             Text(route.distance, format: .measurement(width: .abbreviated))
         }
-        .onAppear { route.recomputeStatsIfNeeded() }
     }
 }

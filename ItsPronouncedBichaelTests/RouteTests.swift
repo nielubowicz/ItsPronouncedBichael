@@ -2,21 +2,11 @@ import CoreLocation
 import XCTest
 @testable import ItsPronouncedBichael
 
-final class RouteMigrationTests: XCTestCase {
-    func testOpeningLegacyRouteMigratesLocationsIntoPoints() {
-        let route = Route(initialRoute: Self.syntheticLocations(count: 5))
-        XCTAssertEqual(route.locations.count, 5)
-        XCTAssertTrue(route.points.isEmpty)
-
-        _ = RouteViewModel(route: route, locationManager: LocationManager())
-
-        XCTAssertTrue(route.locations.isEmpty)
-        XCTAssertEqual(route.points.count, 5)
-    }
-
-    func testMigrationPreservesLocationData() {
+final class RouteTests: XCTestCase {
+    func testLoadingRoutePreservesPointData() {
         let originalLocations = Self.syntheticLocations(count: 5)
-        let route = Route(initialRoute: originalLocations)
+        let route = Route()
+        route.points = originalLocations.map { RoutePoint(RouteLocation($0)) }
 
         let viewModel = RouteViewModel(route: route, locationManager: LocationManager())
 
@@ -27,19 +17,8 @@ final class RouteMigrationTests: XCTestCase {
         }
     }
 
-    func testRecomputeStatsIfNeededMigratesLegacyRouteOnce() {
-        let route = Route(initialRoute: Self.syntheticLocations(count: 5))
-
-        route.recomputeStatsIfNeeded()
-
-        XCTAssertTrue(route.locations.isEmpty)
-        XCTAssertEqual(route.points.count, 5)
-        XCTAssertTrue(route.statsComputed)
-        XCTAssertGreaterThan(route.cachedDistance, 0)
-    }
-
-    func testStopWritesNewRoutesDirectlyToPointsRelationship() {
-        let route = Route(initialRoute: [])
+    func testStopWritesPointsAndStats() {
+        let route = Route()
         let viewModel = RouteViewModel(route: route, locationManager: LocationManager())
 
         for location in Self.syntheticLocations(count: 5) {
@@ -47,8 +26,8 @@ final class RouteMigrationTests: XCTestCase {
         }
         viewModel.stop()
 
-        XCTAssertTrue(route.locations.isEmpty)
-        XCTAssertEqual(route.points.count, 5)
+        XCTAssertEqual(route.points?.count, 5)
+        XCTAssertGreaterThan(route.cachedDistance, 0)
     }
 
     private static func syntheticLocations(count: Int) -> [CLLocation] {
